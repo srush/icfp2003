@@ -1,6 +1,7 @@
-module Simulation where
+module Simulation (step_car) where
 
 import FPInt
+import Car
 
 -- Simulation
 fac_A :: FPInt
@@ -17,37 +18,6 @@ fac_F1 :: FPInt
 fac_F1 = 12
 fac_F2 :: FPInt
 fac_F2 = 24
-
-data Instruction = Roll
-                 | Acc
-                 | TurnL
-                 | TurnR
-                 | AccL
-                 | AccR
-                 | Brake
-
-accelp :: Instruction -> Bool
-accelp Acc = True
-accelp AccL = True
-accelp AccR = True
-accelp _ = False
-
-brakep :: Instruction -> Bool
-brakep Brake = True
-brakep _ = False
-
-turnlp :: Instruction -> Bool
-turnlp TurnL = True
-turnlp AccL = True
-turnlp _ = False
-
-turnrp :: Instruction -> Bool
-turnrp TurnR = True
-turnrp AccR = True
-turnrp _ = False
-
-data CarState = CarState {car_x :: FPInt, car_y :: FPInt, car_v :: FPInt, 
-                          car_d :: FPInt}
 
 step_car :: CarState -> Instruction -> CarState
 step_car (CarState {car_x = x, car_y = y, car_v = v, car_d = d}) inst =
