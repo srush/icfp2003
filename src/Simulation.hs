@@ -23,7 +23,7 @@ fac_F2 = 24
 
 step_car :: CarState -> Instruction -> CarState
 step_car (CarState {car_x = x, car_y = y, car_v = v, car_d = d}) inst =
-    CarState {car_x = x', car_y = y', car_v = v', car_d = d'}
+    CarState {car_x = x', car_y = y', car_v = v'', car_d = d'}
   where
     x' = x + v'' `mul_fp` (cos_fp d')
     y' = y + v'' `mul_fp` (sin_fp d')
@@ -32,7 +32,7 @@ step_car (CarState {car_x = x, car_y = y, car_v = v, car_d = d}) inst =
     brk = if brakep inst then -fac_B else 0
     v'' = if v' < 0 then 0 else v'
     d' = normAng_fp (d - tl + tr)
-    tf = fac_T `div` (sqr_fp v'' + fac_L)
+    tf = fac_T `div_fp` (sqr_fp v'' + fac_L)
     tl = if turnlp inst then tf else 0
     tr = if turnrp inst then tf else 0
     

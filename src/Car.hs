@@ -7,6 +7,7 @@ import Text.ParserCombinators.Parsec.Language (emptyDef)
 import qualified Text.ParserCombinators.Parsec.Token as P 
 import Control.Applicative
 import Test.HUnit
+import Utils
 
 data Instruction = Roll
                  | Acc
@@ -15,7 +16,9 @@ data Instruction = Roll
                  | AccL
                  | AccR
                  | Brake
-                 deriving (Show, Eq)
+                 deriving (Show, Eq, Enum)
+
+  
 type Trace = [Instruction]
                  
 instToCmd :: Instruction -> String
@@ -27,6 +30,11 @@ instToCmd i = case i of
   AccL -> "al."
   AccR -> "ar."
   Brake -> "b."
+  
+randInst :: IO Instruction
+randInst = do
+  i <- randRange 0 6
+  return $ toEnum i
 
 cmdToInst :: String -> Instruction
 cmdToInst i = case i of
