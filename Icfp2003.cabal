@@ -1,0 +1,13 @@
+name:           Icfp2003
+version:        0.0
+license:        BSD3
+license-file:   LICENSE
+author:         sasha.rush@gmail.com
+synopsis:       icfp 2003
+build-depends:  base, mtl, bytestring, hunit, quickcheck
+build-type:     Simple
+Cabal-Version:  >= 1.2
+
+executable:     icfp2003
+hs-source-dirs: src
+main-is:        Main.hs
