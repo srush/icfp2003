@@ -1,8 +1,9 @@
 module Car (Instruction, Trace, accelp, brakep, turnlp, turnrp, CarState(..), 
-            instToCmd, initCar) where
+            instToCmd, initCar, randInst) where
 
 import FPInt
 import qualified World as W
+import Utils
 
 data Instruction = Roll
                  | Acc
@@ -11,7 +12,8 @@ data Instruction = Roll
                  | AccL
                  | AccR
                  | Brake
-                 
+  deriving (Enum)
+  
 type Trace = [Instruction]
                  
 instToCmd :: Instruction -> String
@@ -23,6 +25,11 @@ instToCmd i = case i of
   AccL -> "al."
   AccR -> "ar."
   Brake -> "b."
+  
+randInst :: IO Instruction
+randInst = do
+  i <- randRange 0 6
+  return $ toEnum i
 
 accelp :: Instruction -> Bool
 accelp Acc = True
