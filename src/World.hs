@@ -7,11 +7,14 @@ import Control.Applicative
 import Data.Array
 import Test.HUnit
 import Debug.Trace
+import Control.Monad (liftM)
 
 type Pos = (Int, Int) 
 data World = World {
       ground :: Array Int (Array Int Square),
-      start :: Pos 
+      start :: Pos, 
+      height :: Int,
+      width :: Int
 } deriving Show
 
 -- Road True if it is finish
@@ -53,7 +56,6 @@ fromFile filename = do
   contents <- readFile filename
   either (fail.show) (return.id)  $ parse readWorld "" contents
 
-
 readSquare :: Parser Square
 readSquare = 
   Wall <$ oneOf "grwb" <|>
@@ -64,12 +66,12 @@ readSquare =
 
 readWorld :: Parser World
 readWorld = do
-  w <- integer
-  h <- integer
+  w <- fromInteger `liftM` integer
+  h <- fromInteger `liftM` integer
   grid <- sepBy (many readSquare) eol
-  let innerArrays = map (listArray (0, fromInteger (w-1))) grid 
-  let arrayForm =  listArray (0, fromInteger (h-1)) innerArrays
-  return $ World arrayForm  (0,0)
+  let innerArrays = map (listArray (0,  w-1)) grid 
+  let arrayForm =  listArray (0, h-1) innerArrays
+  return $ World arrayForm (0,0) h w
 
 testSimple = TestCase $ do 
   world <- fromFile "/home/srush/Projects/icfp2003/data/supersimple.trk"
