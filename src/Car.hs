@@ -1,7 +1,8 @@
-module Car (Instruction, accelp, brakep, turnlp, turnrp, CarState(..), 
-            instToCmd) where
+module Car (Instruction, Trace, accelp, brakep, turnlp, turnrp, CarState(..), 
+            instToCmd, initCar) where
 
 import FPInt
+import qualified World as W
 
 data Instruction = Roll
                  | Acc
@@ -10,6 +11,8 @@ data Instruction = Roll
                  | AccL
                  | AccR
                  | Brake
+                 
+type Trace = [Instruction]
                  
 instToCmd :: Instruction -> String
 instToCmd i = case i of
@@ -43,3 +46,6 @@ turnrp _ = False
 
 data CarState = CarState {car_x :: FPInt, car_y :: FPInt, car_v :: FPInt, 
                           car_d :: FPInt}
+                          
+initCar :: W.Pos -> CarState
+initCar (x, y) = CarState (int2fp x) (int2fp y) 0 0

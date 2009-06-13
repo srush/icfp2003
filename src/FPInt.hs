@@ -1,5 +1,5 @@
 module FPInt (FPInt, mul_fp, div_fp, pi_fp, pid2_fp, pi2_fp, sin_fp, cos_fp,
-              sqr_fp, normAng_fp) where
+              sqr_fp, normAng_fp, int2fp, fp2int) where
 
 import Data.Int
 import Data.Bits
@@ -44,3 +44,8 @@ normAng_fp a | a < -pi_fp = normAng_fp (a + pi2_fp)
              | a > pi_fp = normAng_fp (a - pi2_fp)
              | otherwise = a
 
+int2fp :: Int -> FPInt
+int2fp i = fromIntegral (i * 65536)
+
+fp2int :: FPInt -> Int
+fp2int f = fromIntegral (f `div` 65536)

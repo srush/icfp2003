@@ -1,7 +1,8 @@
-module Simulation (step_car) where
+module Simulation (State, init_state, crashed_state, step_car) where
 
 import FPInt
 import Car
+import qualified World as W
 
 -- Simulation
 fac_A :: FPInt
@@ -34,5 +35,18 @@ step_car (CarState {car_x = x, car_y = y, car_v = v, car_d = d}) inst =
     tl = if turnlp inst then tf else 0
     tr = if turnrp inst then tf else 0
     
+
+-- Sim State
+type State = (CarState, W.World)
     
+init_state :: String -> IO State
+init_state file = do
+  w <- W.fromFile file
+  return (initCar . W.start $ w, w)
+
+
+crashed_state :: State -> Bool
+crashed_state (CarState {car_x = x, car_y = y}, w) = 
+  W.isBarrier w (fp2int x, fp2int y)
+
       
