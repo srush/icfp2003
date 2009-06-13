@@ -17,8 +17,8 @@ data World = World {
       width :: Int
 } deriving Show
 
--- Road True if it is finish
-data Square = Road Bool | Wall 
+-- Road True False if it is finish and not start
+data Square = Road Bool Bool | Wall 
               deriving Show
 
 
@@ -28,20 +28,20 @@ getSquare world (x,y) = ((ground world) ! y) ! x
 isRoad :: World -> Pos -> Bool
 isRoad world pos  = 
     case getSquare world pos of
-      Road _ -> True
+      Road _ _-> True
       _ -> False
 
 isBarrier :: World -> Pos -> Bool
 isBarrier world pos =  
     case getSquare world pos of
-      Road _ -> False
+      Road _ _ -> False
       _ -> True
 
 
 isGoal :: World -> Pos -> Bool
 isGoal world pos  = 
     case getSquare world pos of
-      Road a -> a
+      Road a _-> a
       _ -> False
 
 
@@ -56,12 +56,20 @@ fromFile filename = do
   contents <- readFile filename
   either (fail.show) (return.id)  $ parse readWorld "" contents
 
+-- oh god, so lazy.
+findStart :: Array Int (Array Int Square) -> Pos
+findStart grid = maybe (0,0) id $ foldr findRow Nothing (assocs grid) 
+    where findRow (i,v) Nothing = foldr (findSquare i) Nothing (assocs v) 
+          findRow _ s = s 
+          findSquare i (j, Road _ True) Nothing = Just (j,i)
+          findSquare _ _ s = s
+
 readSquare :: Parser Square
 readSquare = 
   Wall <$ oneOf "grwb" <|>
-  Road False <$ char '.' <|>
-  Road True  <$ char '!' <|>
-  Road False  <$ char '*' 
+  Road False False <$ char '.' <|>
+  Road True False <$ char '!' <|>
+  Road False True <$ char '*' 
   
 
 readWorld :: Parser World
@@ -71,7 +79,7 @@ readWorld = do
   grid <- sepBy (many readSquare) eol
   let innerArrays = map (listArray (0,  w-1)) grid 
   let arrayForm =  listArray (0, h-1) innerArrays
-  return $ World arrayForm (0,0) h w
+  return $ World arrayForm (findStart arrayForm) h w
 
 testSimple = TestCase $ do 
   world <- fromFile "/home/srush/Projects/icfp2003/data/supersimple.trk"
@@ -79,5 +87,6 @@ testSimple = TestCase $ do
   assertEqual "barrier check" True $ isBarrier world (0,0)
   assertEqual "road success" True $ isRoad world (1,1) 
   assertEqual "goal" True $ isGoal world (1,2) 
+  assertEqual "start" (2,3) $ start world
 
 worldTests = TestList $ [testSimple]

@@ -1,7 +1,8 @@
-module Simulation (State, init_state, crashed_state, step_car) where
+module Simulation (State, init_state, crashed_state, step_car, run) where
 
 import FPInt
 import Car
+import Test.HUnit hiding (State)
 import qualified World as W
 
 -- Simulation
@@ -49,4 +50,39 @@ crashed_state :: State -> Bool
 crashed_state (CarState {car_x = x, car_y = y}, w) = 
   W.isBarrier w (fp2int x, fp2int y)
 
-      
+finish_state :: State -> Bool
+finish_state (CarState {car_x = x, car_y = y}, w) = 
+  W.isGoal w (fp2int x, fp2int y)
+
+car_pos CarState {car_x = x, car_y = y} = 
+    (fp2int x, fp2int y)
+
+data Result = Crash Int | Finish Int | RanOut
+              deriving (Eq, Show)
+
+run ::  Trace -> W.World -> (Result, [W.Pos]) 
+run trace world = 
+    run_one (initCar (W.start world)) (0,[]) trace
+    where
+      run_one _ (_,path) [] = (RanOut, path)
+      run_one car (i,path) (dir:rest) =
+          if crashed_state (newCar,world) then 
+              (Crash i, path)
+          else if finish_state (newCar, world) then
+              (Finish i, path)
+          else run_one newCar (i+1, (car_pos newCar):path) rest
+              where newCar = step_car car dir
+          
+
+testSim = TestCase $ do 
+  world <- W.fromFile "/home/srush/Projects/icfp2003/data/supersimple.trk"
+  let trace = cycle [Acc]
+  assertEqual "crash test" (Crash 80) (fst $run trace world)
+
+testTrace = TestCase $ do 
+  world <- W.fromFile "/home/srush/Projects/icfp2003/data/example/Een.trk"
+  trace <- traceFromFile "/home/srush/Projects/icfp2003/data/example/Een.trc"
+  assertEqual "workd test" (Finish 100) (fst$run trace world)
+
+
+simTests = TestList $ [testTrace]
