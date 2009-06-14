@@ -8,7 +8,7 @@ import qualified Text.ParserCombinators.Parsec.Token as P
 import Control.Applicative
 import Test.HUnit
 import Utils
-
+import Text.Printf
 data Instruction = Roll
                  | Acc
                  | TurnL
@@ -88,8 +88,20 @@ initCar :: W.Pos -> CarState
 initCar (x, y) = CarState (int2fp x) (int2fp y) 0 0
 
 
+formatCar :: CarState -> String
+formatCar car = printf "%10i%10i%10i%10i%10i" (car_x car) (car_y car) (car_v car) (car_d car) (car_d car) 
+
+formatPath :: [CarState] -> [String]
+formatPath cars = map (\(i,car) -> printf "%4i :%s" (i::Int) (formatCar car)::String) $  zip [0..] cars  
+
 testSimple = TestCase $ do 
   trace <- traceFromFile "/home/srush/Projects/icfp2003/data/supersimple.trc"
   assertEqual "trace" [Acc, AccL, Roll, AccL, AccL, TurnR, Roll] trace
 
-carTests = TestList [testSimple] 
+testFormat = TestCase $ do 
+               print $ formatPath  [CarState {car_x= 23265338,
+                                              car_y= 21102591,
+                                              car_v = 40,
+                                              car_d = -209}]
+
+carTests = TestList [testFormat] 

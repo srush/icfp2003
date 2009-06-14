@@ -1,4 +1,4 @@
-module Simulation (State, init_state, crashed_state, step_car, run) where
+module Main (State, init_state, crashed_state, step_car, run) where
 
 import FPInt
 import Car
@@ -60,17 +60,18 @@ car_pos CarState {car_x = x, car_y = y} =
 data Result = Crash Int | Finish Int | RanOut
               deriving (Eq, Show)
 
-run ::  Trace -> W.World -> (Result, [W.Pos]) 
-run trace world = 
-    run_one (initCar (W.start world)) (0,[]) trace
+run ::  Trace -> W.World -> (Result, [CarState]) 
+run trace world = (r, reverse path) 
     where
+      (r, path) = run_one firstCar (0, [firstCar]) trace
+      firstCar = initCar (W.start world) 
       run_one _ (_,path) [] = (RanOut, path)
       run_one car (i,path) (dir:rest) =
           if crashed_state (newCar,world) then 
               (Crash i, path)
           else if finish_state (newCar, world) then
               (Finish i, path)
-          else run_one newCar (i+1, (car_pos newCar):path) rest
+          else run_one newCar (i+1, (newCar:path)) rest
               where newCar = step_car car dir
           
 
@@ -82,7 +83,13 @@ testSim = TestCase $ do
 testTrace = TestCase $ do 
   world <- W.fromFile "/home/srush/Projects/icfp2003/data/example/Een.trk"
   trace <- traceFromFile "/home/srush/Projects/icfp2003/data/example/Een.trc"
-  assertEqual "workd test" (Finish 100) (fst$run trace world)
+  print $ unlines $ formatPath $ snd $ run trace world
+  --assertEqual "workd test" (Finish 100) (fst$run trace world)
 
 
 simTests = TestList $ [testTrace]
+
+main = do 
+  world <- W.fromFile "/home/srush/Projects/icfp2003/data/example/Een.trk"
+  trace <- traceFromFile "/home/srush/Projects/icfp2003/data/example/Een.trc"
+  putStr $ unlines $ formatPath $ snd $ run trace world
