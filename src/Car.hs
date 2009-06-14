@@ -81,8 +81,11 @@ turnrp TurnR = True
 turnrp AccR = True
 turnrp _ = False
 
-data CarState = CarState {car_x :: FPInt, car_y :: FPInt, car_v :: FPInt, 
-                          car_d :: FPInt}
+-- car is data, make it strict.
+data CarState = CarState {car_x :: !FPInt, 
+                          car_y :: !FPInt, 
+                          car_v :: !FPInt, 
+                          car_d :: !FPInt}
                           
 initCar :: W.Pos -> CarState
 initCar (x, y) = CarState (int2fp x) (int2fp y) 0 0

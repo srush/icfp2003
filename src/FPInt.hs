@@ -14,13 +14,18 @@ pi_fp = 205887
 pi2_fp :: FPInt
 pi2_fp = 411775
 
+-- inlines are pretty nasty, but they speed it up significantly (2x faster)
+
 mul_fp :: FPInt -> FPInt -> FPInt
+{-# INLINE mul_fp #-}
 mul_fp x y = (x * y) `shiftR` 16
 
 div_fp :: FPInt -> FPInt -> FPInt
+{-# INLINE div_fp #-}
 div_fp x y = (x `shiftL` 16) `div` y
 
 sin_fp :: FPInt -> FPInt
+{-# INLINE sin_fp #-}
 sin_fp x | x < 0 = -sin_fp(-x)
          | x > pid2_fp = sin_fp (pi_fp - x)
          | otherwise = x - (x3 `div` 6) + (x5 `div` 120) - (x7 `div` 5040) 
@@ -31,12 +36,14 @@ sin_fp x | x < 0 = -sin_fp(-x)
     x7 = x5 `mul_fp` x2
 
 cos_fp :: FPInt -> FPInt
+{-# INLINE cos_fp #-}
 cos_fp x | x' > pi_fp = sin_fp (x' - pi2_fp)
          | otherwise = sin_fp x'
   where
     x' = x + pid2_fp
 
 sqr_fp :: FPInt -> FPInt
+{-# INLINE sqr_fp #-}
 sqr_fp x = x `mul_fp` x
 
 normAng_fp :: FPInt -> FPInt
@@ -48,4 +55,5 @@ int2fp :: Int -> FPInt
 int2fp i = fromIntegral (i * 65536)
 
 fp2int :: FPInt -> Int
-fp2int f = fromIntegral (f `div` 65536)
+{-# INLINE fp2int #-}
+fp2int f = fromIntegral (f `shiftR` 16)

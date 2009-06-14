@@ -27,8 +27,8 @@ main = do
     SDL.glSwapBuffers
     world <- fromFile "/home/srush/Projects/icfp2003/data/example/Een.trk"
     trace <- traceFromFile "/home/srush/Projects/icfp2003/data/example/Een.trc" 
-    let (result, path) = run trace world
-    print path
+    let (result, cars) = run trace world
+    let path = convertToPath cars
     Draw.draw $ Draw.scale 0.0008 0.0008  $ Draw.translate (fromIntegral (width world) / (-1.0), fromIntegral (height world)) $  
         mappend (drawPath path) (drawWorld world) 
     SDL.glSwapBuffers

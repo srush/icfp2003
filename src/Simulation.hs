@@ -1,10 +1,11 @@
-module Main (State, init_state, crashed_state, step_car, run) where
+module Main (State, init_state, crashed_state, step_car, run, convertToPath) where
 
 import FPInt
 import Car
 import Test.HUnit hiding (State)
+import Text.Printf
 import qualified World as W
-
+import Data.List
 -- Simulation
 fac_A :: FPInt
 fac_A = 24
@@ -27,7 +28,7 @@ step_car (CarState {car_x = x, car_y = y, car_v = v, car_d = d}) inst =
   where
     acc = if accelp inst then fac_A else 0
     brk = if brakep inst then -fac_B else 0
-    v' = v - fac_F0 + (fac_F1 `mul_fp` v) + (fac_F2 `mul_fp` (sqr_fp v)) + acc + 
+    v' = v - (fac_F0 + (fac_F1 `mul_fp` v) + (fac_F2 `mul_fp` (sqr_fp v))) + acc + 
          brk
     v'' = if v' < 0 then 0 else v'
     tf = fac_T `div_fp` ((sqr_fp v'') + fac_L)
@@ -54,8 +55,12 @@ finish_state :: State -> Bool
 finish_state (CarState {car_x = x, car_y = y}, w) = 
   W.isGoal w (fp2int x, fp2int y)
 
-car_pos CarState {car_x = x, car_y = y} = 
-    (fp2int x, fp2int y)
+-- checked every time in main loop
+car_pos ::CarState -> (Int, Int)
+{-# INLINE car_pos #-}
+car_pos CarState {car_x = x, car_y = y} = (fp2int x, fp2int y)
+
+convertToPath = map car_pos 
 
 data Result = Crash Int | Finish Int | RanOut
               deriving (Eq, Show)
@@ -75,6 +80,21 @@ run trace world = (r, reverse path)
               where newCar = step_car car dir
           
 
+run_fast trace world = run_one firstCar 0 trace
+    where
+      firstCar = initCar (W.start world) 
+      -- This is the tight loop of the whole program, 
+      -- tail recursion and 
+      run_one :: CarState -> Int -> Trace -> Result
+      run_one _ _ [] = RanOut
+      run_one car i (dir:rest) =
+          if car_pos car == car_pos newCar then 
+              run_one newCar (i+1) rest
+          else if crashed_state (newCar,world) then Crash i
+          else if finish_state (newCar, world) then Finish i
+          else run_one newCar (i+1) rest
+              where newCar = step_car car dir
+
 testSim = TestCase $ do 
   world <- W.fromFile "data/supersimple.trk"
   let trace = cycle [Acc]
@@ -87,7 +107,14 @@ testTrace = TestCase $ do
 
 simTests = TestList $ [testTrace]
 
+--formatTrace = map (\(i, t) -> printf "T %5i : %s" (i::Int) (instToCmd t)) . zip [0..]
+
+touch (Crash _) = 1
+touch (Finish _)  = 0
+touch RanOut = 0 
+
 main = do 
   world <- W.fromFile "/home/srush/Projects/icfp2003/data/example/Een.trk"
   trace <- traceFromFile "/home/srush/Projects/icfp2003/data/example/Een.trc"
-  putStr $ unlines $ formatPath $ snd $ run trace world
+  --putStr $ unlines $ formatTrace trace
+  print $ sum $ map touch $ map (\t -> run_fast t world) $ take 1000 (tails trace)
