@@ -5,7 +5,7 @@ import qualified Graphics.UI.SDL as SDL
 import World
 import Data.Array
 import Data.Monoid
-import System.Posix
+--import System.Posix
 
 resX = 600
 resY = 600
