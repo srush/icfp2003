@@ -1,8 +1,12 @@
+{-# INCLUDE "fixedmath.h" #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
 module FPInt (FPInt, mul_fp, div_fp, pi_fp, pid2_fp, pi2_fp, sin_fp, cos_fp,
               sqr_fp, normAng_fp, int2fp, fp2int) where
 
 import Data.Int
 import Data.Bits
+import Foreign
+import Foreign.C.Types
 
 -- Fixed Point Int
 type FPInt = Int64
@@ -14,26 +18,31 @@ pi_fp = 205887
 pi2_fp :: FPInt
 pi2_fp = 411775
 
--- inlines are pretty nasty, but they speed it up significantly (2x faster)
+foreign import ccall unsafe "mul_fp"
+     c_mul_fp :: CLLong -> CLLong -> CLLong
 
+foreign import ccall unsafe "sin_fp"
+     c_sin_fp :: CLLong -> CLLong
+
+foreign import ccall unsafe "fp2int"
+     c_fp2int :: CLLong -> CLLong
+
+foreign import ccall unsafe "div_fp"
+     c_div_fp :: CLLong -> CLLong -> CLLong
+
+
+-- inlines are pretty nasty, but they speed it up significantly (2x faster)
 mul_fp :: FPInt -> FPInt -> FPInt
 {-# INLINE mul_fp #-}
-mul_fp x y = (x * y) `shiftR` 16
+mul_fp x y = fromIntegral $ c_mul_fp (fromIntegral x) (fromIntegral y)
 
 div_fp :: FPInt -> FPInt -> FPInt
 {-# INLINE div_fp #-}
-div_fp x y = (x `shiftL` 16) `div` y
+div_fp x y = fromIntegral $ c_div_fp (fromIntegral x) (fromIntegral y)
 
 sin_fp :: FPInt -> FPInt
 {-# INLINE sin_fp #-}
-sin_fp x | x < 0 = -sin_fp(-x)
-         | x > pid2_fp = sin_fp (pi_fp - x)
-         | otherwise = x - (x3 `div` 6) + (x5 `div` 120) - (x7 `div` 5040) 
-  where
-    x2 = x `mul_fp` x
-    x3 = x `mul_fp` x2
-    x5 = x3 `mul_fp` x2
-    x7 = x5 `mul_fp` x2
+sin_fp = fromIntegral . c_sin_fp . fromIntegral 
 
 cos_fp :: FPInt -> FPInt
 {-# INLINE cos_fp #-}
@@ -56,4 +65,4 @@ int2fp i = fromIntegral (i * 65536)
 
 fp2int :: FPInt -> Int
 {-# INLINE fp2int #-}
-fp2int f = fromIntegral (f `shiftR` 16)
+fp2int = fromIntegral . c_fp2int . fromIntegral

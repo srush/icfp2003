@@ -1,42 +1,13 @@
 module Main (State, init_state, crashed_state, step_car, run, convertToPath) where
-
-import FPInt
 import Car
 import Test.HUnit hiding (State)
 import Text.Printf
 import qualified World as W
 import Data.List
--- Simulation
-fac_A :: FPInt
-fac_A = 24
-fac_B :: FPInt
-fac_B = 36
-fac_T :: FPInt
-fac_T = 64
-fac_L :: FPInt
-fac_L = 20000
-fac_F0 :: FPInt
-fac_F0 = 4
-fac_F1 :: FPInt
-fac_F1 = 12
-fac_F2 :: FPInt
-fac_F2 = 24
+import Fixedmath
+import qualified Debug.Trace as T
 
-step_car :: CarState -> Instruction -> CarState
-step_car (CarState {car_x = x, car_y = y, car_v = v, car_d = d}) inst =
-    CarState {car_x = x', car_y = y', car_v = v'', car_d = d'}
-  where
-    acc = if accelp inst then fac_A else 0
-    brk = if brakep inst then -fac_B else 0
-    v' = v - (fac_F0 + (fac_F1 `mul_fp` v) + (fac_F2 `mul_fp` (sqr_fp v))) + acc + 
-         brk
-    v'' = if v' < 0 then 0 else v'
-    tf = fac_T `div_fp` ((sqr_fp v'') + fac_L)
-    t = if turnlp inst then -tf else if turnrp inst then tf else 0
-    d' = normAng_fp (d + t)
-    x' = x + (v'' `mul_fp` (cos_fp d'))
-    y' = y + (v'' `mul_fp` (sin_fp d'))
-    
+-- Simulation
 
 -- Sim State
 type State = (CarState, W.World)
@@ -46,19 +17,18 @@ init_state file = do
   w <- W.fromFile file
   return (initCar . W.start $ w, w)
 
-
 crashed_state :: State -> Bool
-crashed_state (CarState {car_x = x, car_y = y}, w) = 
-  W.isBarrier w (fp2int x, fp2int y)
+crashed_state (car, w) = 
+  W.isBarrier w $ car_pos car
 
 finish_state :: State -> Bool
-finish_state (CarState {car_x = x, car_y = y}, w) = 
-  W.isGoal w (fp2int x, fp2int y)
+finish_state (car, w) = 
+  W.isGoal w $ car_pos car
 
 -- checked every time in main loop
 car_pos ::CarState -> (Int, Int)
 {-# INLINE car_pos #-}
-car_pos CarState {car_x = x, car_y = y} = (fp2int x, fp2int y)
+car_pos  car =  (fp2int $ car_x car, fp2int $ car_y car)
 
 convertToPath = map car_pos 
 
@@ -85,16 +55,20 @@ run_fast trace world = run_one firstCar 0 trace
       firstCar = initCar (W.start world) 
       -- This is the tight loop of the whole program, 
       -- tail recursion and 
-      run_one :: CarState -> Int -> Trace -> Result
-      run_one _ _ [] = RanOut
-      run_one car i (dir:rest) =
-          if car_pos car == car_pos newCar then 
-              run_one newCar (i+1) rest
-          else if crashed_state (newCar,world) then Crash i
-          else if finish_state (newCar, world) then Finish i
-          else run_one newCar (i+1) rest
-              where newCar = step_car car dir
+      run_one :: CarState -> Int -> Trace -> IO Result
+      run_one _ _ [] = return RanOut
+      run_one car i (dir:rest) = do 
+        let newCar = step_car car dir
+        let oldpos = car_pos car
+        kill_car car
+        if oldpos ==  car_pos newCar then
+            run_one newCar (i+1) rest
+         else if crashed_state (newCar,world) then return $ Crash i
+         else if finish_state (newCar, world) then return $ Finish i
+         else run_one newCar (i+1) rest
 
+        
+        
 testSim = TestCase $ do 
   world <- W.fromFile "data/supersimple.trk"
   let trace = cycle [Acc]
@@ -117,4 +91,5 @@ main = do
   world <- W.fromFile "/home/srush/Projects/icfp2003/data/example/Een.trk"
   trace <- traceFromFile "/home/srush/Projects/icfp2003/data/example/Een.trc"
   --putStr $ unlines $ formatTrace trace
-  print $ sum $ map touch $ map (\t -> run_fast t world) $ take 1000 (tails trace)
+  --putStr $ unlines $ formatPath $ snd $ run trace world
+  sequence $ map (\t -> run_fast t world) $ map (take 1000) $ take 1000 $  (tails (cycle trace))
