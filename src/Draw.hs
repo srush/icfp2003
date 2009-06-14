@@ -7,7 +7,7 @@ import Car
 import Simulation
 import Data.Array
 import Data.Monoid
-import System.Posix
+--import System.Posix
 
 resX = 1000
 resY = 1000

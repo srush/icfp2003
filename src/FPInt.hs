@@ -23,10 +23,10 @@ div_fp x y = (x `shiftL` 16) `div` y
 sin_fp :: FPInt -> FPInt
 sin_fp x | x < 0 = -sin_fp(-x)
          | x > pid2_fp = sin_fp (pi_fp - x)
-         | otherwise = x - x3 `div` 6 + x5 `div` 120 - x7 `div` 5040 
+         | otherwise = x - (x3 `div` 6) + (x5 `div` 120) - (x7 `div` 5040) 
   where
     x2 = x `mul_fp` x
-    x3 = x2 `mul_fp` x
+    x3 = x `mul_fp` x2
     x5 = x3 `mul_fp` x2
     x7 = x5 `mul_fp` x2
 
