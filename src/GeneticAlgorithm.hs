@@ -9,11 +9,13 @@ type Genome = Trace
 type Population = [Trace]
 
 -- Default option
-data GAOpts = GAOpts {mut_rate :: Double, cross_rate :: Double, 
+data GAOpts = GAOpts {population :: Int, repro_pop :: Int,
+                      mut_rate :: Double, cross_rate :: Double, 
                       tourn_size :: Int, tourn_p :: Double}
 defGAOpts :: GAOpts
-defGAOpts = GAOpts {mut_rate = 0.001, cross_rate = 0.07, tourn_size = 100,
-                    tourn_p = 0.7}
+defGAOpts = GAOpts {population = 10000, repro_pop = 100, 
+                    mut_rate = 0.001, cross_rate = 0.07, 
+                    tourn_size = 100, tourn_p = 0.7}
 
 type GenAlgM a = ReaderT GAOpts IO a
 
@@ -79,3 +81,8 @@ tournament pop = do
                                 (map (\g -> (g, fitness g)) competitors)
   lift $ tournamentChoose p (1-p) sortedComps
 
+reproducers :: Population -> GenAlgM Population
+reproducers pop = do
+  GAOpts {repro_pop = rp} <- ask
+  replicateM rp (tournament pop)
+  
