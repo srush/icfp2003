@@ -27,7 +27,7 @@ step_car (CarState {car_x = x, car_y = y, car_v = v, car_d = d}) inst =
   where
     acc = if accelp inst then fac_A else 0
     brk = if brakep inst then -fac_B else 0
-    v' = abs $ v - fac_F0 + (fac_F1 `mul_fp` v) + (fac_F2 `mul_fp` (sqr_fp v)) + acc + 
+    v' = v - fac_F0 + (fac_F1 `mul_fp` v) + (fac_F2 `mul_fp` (sqr_fp v)) + acc + 
          brk
     v'' = if v' < 0 then 0 else v'
     tf = fac_T `div_fp` ((sqr_fp v'') + fac_L)
