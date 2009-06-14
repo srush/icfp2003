@@ -7,19 +7,19 @@ import qualified World as W
 
 -- Simulation
 fac_A :: FPInt
-fac_A = int2fp 24
+fac_A = 24
 fac_B :: FPInt
-fac_B = int2fp 36
+fac_B = 36
 fac_T :: FPInt
-fac_T = int2fp 64
+fac_T = 64
 fac_L :: FPInt
-fac_L = int2fp 20000
+fac_L = 20000
 fac_F0 :: FPInt
-fac_F0 = int2fp 4
+fac_F0 = 4
 fac_F1 :: FPInt
-fac_F1 = int2fp 12
+fac_F1 = 12
 fac_F2 :: FPInt
-fac_F2 = int2fp 24
+fac_F2 = 24
 
 step_car :: CarState -> Instruction -> CarState
 step_car (CarState {car_x = x, car_y = y, car_v = v, car_d = d}) inst =
@@ -76,16 +76,14 @@ run trace world = (r, reverse path)
           
 
 testSim = TestCase $ do 
-  world <- W.fromFile "/home/srush/Projects/icfp2003/data/supersimple.trk"
+  world <- W.fromFile "data/supersimple.trk"
   let trace = cycle [Acc]
   assertEqual "crash test" (Crash 80) (fst $run trace world)
 
 testTrace = TestCase $ do 
-  world <- W.fromFile "/home/srush/Projects/icfp2003/data/example/Een.trk"
-  trace <- traceFromFile "/home/srush/Projects/icfp2003/data/example/Een.trc"
-  print $ unlines $ formatPath $ snd $ run trace world
-  --assertEqual "workd test" (Finish 100) (fst$run trace world)
-
+  world <- W.fromFile "../data/example/Een.trk"
+  trace <- traceFromFile "data/example/Een.trc"
+  assertEqual "workd test" (Finish 100) (fst$run trace world)
 
 simTests = TestList $ [testTrace]
 
