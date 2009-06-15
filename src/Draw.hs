@@ -7,7 +7,8 @@ import Car
 import Simulation
 import Data.Array
 import Data.Monoid
---import System.Posix
+import Control.Concurrent
+import Search
 
 resX = 1000
 resY = 1000
@@ -22,15 +23,22 @@ initScreen = do
 
 main :: IO ()
 main = do
+    world <- fromFile "/home/srush/Projects/icfp2003/data/1_Simple.trk"
+    let path = shortestPath world 
+    --    f <- readFile "/home/srush/Projects/icfp2003/src/dp.trace"
+    --trace <- traceFromFile "/home/srush/Projects/icfp2003/data/example/Een.trc" 
+    --let (result, cars) = run trace world
+    --let path = convertToPath cars
+    -- let path =  read f
+    print path
+    print "Starting to draw"
     initScreen
 
     SDL.glSwapBuffers
-    world <- fromFile "/home/srush/Projects/icfp2003/data/example/Een.trk"
-    trace <- traceFromFile "/home/srush/Projects/icfp2003/data/example/Een.trc" 
-    let (result, cars) = run trace world
-    let path = convertToPath cars
+
     Draw.draw $ Draw.scale 0.0008 0.0008  $ Draw.translate (fromIntegral (width world) / (-1.0), fromIntegral (height world)) $  
-        mappend (drawPath path) (drawWorld world) 
+                mconcat [(drawPath $ backtrace path), (drawLinePath $ backtrace path), (drawWorld world)]  
+    
     SDL.glSwapBuffers
     waitClicks
  
@@ -52,9 +60,9 @@ square = Draw.scale (sqrt 2) (sqrt 2) $ Draw.rotate (pi / 4.0) $ Draw.regularPol
 transToWorld :: (Int, Int) -> Draw.Draw () -> Draw.Draw ()
 transToWorld (x, y) = Draw.translate (fromIntegral (2*x), fromIntegral (-2*y))
 
-drawSquare (Road False _) = Draw.color (0,0,0,255) square 
-drawSquare (Road True _) = Draw.color (10,10,10,255) square 
-drawSquare (Wall)    = Draw.color (0,255,0,0) square 
+drawSquare (Road False _) = Draw.color (255,255,255,255) square 
+drawSquare (Road True _) = Draw.color (50,50,0,255) square 
+drawSquare (Wall)    = Draw.empty 
 
 drawRow :: Array Int Square -> Draw.Draw () 
 drawRow row = foldr (\(i, v) -> mappend (transToWorld (i,0) $ drawSquare v)) Draw.empty (assocs row) 
@@ -67,3 +75,8 @@ drawWorld world =
 drawPath :: [(Int, Int)] -> Draw.Draw()
 drawPath = mconcat . 
            map (\pos -> transToWorld pos $ Draw.color (0,0,255,255) square)  
+
+drawLinePath :: [(Int, Int)] -> Draw.Draw()
+drawLinePath path = mconcat . 
+               map (\((x,y),(x2,y2)) -> transToWorld ((x+x2) `div` 2,(y+y2) `div`2) $ Draw.color (0,0,255,255) $ Draw.line (0,0) (fromIntegral (x-x2),fromIntegral(y2-y))) $ 
+                   zip path $ tail path

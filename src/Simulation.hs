@@ -1,4 +1,4 @@
-module Main (State, init_state, crashed_state, step_car, run, convertToPath) where
+module Simulation (State, init_state, crashed_state, step_car, run, convertToPath) where
 
 import FPInt
 import Car
@@ -117,4 +117,5 @@ main = do
   world <- W.fromFile "/home/srush/Projects/icfp2003/data/example/Een.trk"
   trace <- traceFromFile "/home/srush/Projects/icfp2003/data/example/Een.trc"
   --putStr $ unlines $ formatTrace trace
-  print $ sum $ map touch $ map (\t -> run_fast t world) $ take 1000 (tails trace)
+  print $ sum $ map touch $ map (\t -> run_fast t world) $ take 1000000 $ take 1000000 (cycle (tails trace))
+  

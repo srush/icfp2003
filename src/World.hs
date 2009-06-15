@@ -23,7 +23,8 @@ data Square = Road Bool Bool | Wall
 
 
 getSquare ::  World -> Pos -> Square 
-getSquare world (x,y) = ((ground world) ! y) ! x
+getSquare world (x,y) = if x >= width world || y >= height world || x<0|| y<0 then Wall
+                        else ((ground world) ! y) ! x
 
 isRoad :: World -> Pos -> Bool
 isRoad world pos  = 
@@ -42,6 +43,12 @@ isGoal :: World -> Pos -> Bool
 isGoal world pos  = 
     case getSquare world pos of
       Road a _-> a
+      _ -> False
+
+isStart :: World -> Pos -> Bool
+isStart world pos  = 
+    case getSquare world pos of
+      Road _ a-> a
       _ -> False
 
 
@@ -63,6 +70,13 @@ findStart grid = maybe (0,0) id $ foldr findRow Nothing (assocs grid)
           findRow _ s = s 
           findSquare i (j, Road _ True) Nothing = Just (j,i)
           findSquare _ _ s = s
+
+findGoals :: Array Int (Array Int Square) -> [Pos]
+findGoals grid = foldr findRow [] (assocs grid) 
+    where findRow (i,v) ls = foldr (findSquare i) ls (assocs v)
+          findSquare i (j, Road True _) ls =  (j,i):ls
+          findSquare _ _ ls =  ls
+
 
 readSquare :: Parser Square
 readSquare = 
