@@ -25,41 +25,18 @@ _selectN (h:t) needed avail = do
 selectN :: [a] -> Int -> IO [a]
 selectN items needed = _selectN items needed (length items)
 
-----------------------------------------------------------------------------
--- Trig nonsense to find max velocity given that you need make a turn within
--- a tile
 
--- Radius of the circle whose arc you pass through if you turn ang rads inside
--- a tile
-circRad :: Double -> Double
-circRad ang = 1 / (2 - 2 * cos ang)
+-- Math
+normAng :: Double -> Double
+normAng a | a < -pi = normAng (a + 2 * pi)
+          | a > pi = normAng (a - 2 * pi)
+          | otherwise = a
 
--- The fastest you can turn per timestep going at v tiles per timestep
-maxAng :: Double -> Double
-maxAng v = t / (v * v + l)
-  where
-    t = 64 / 65536
-    l = 20000 / 65536
--- The amount you have to turn per timestep at velocity v along an arc of a
--- circle of radius circRad a
-arcAng :: Double -> Double -> Double
-arcAng v a = asin (v / (2 * circRad a))
+square :: Num a => a -> a
+square x = x * x
 
--- Find the max velocity you can go given you need to turn a within a tile
-findMaxV :: Double -> Double
-findMaxV a = _findMaxV a 0 1
+dist :: (Double, Double) -> (Double, Double) -> Double
+dist p1 p2 = sqrt (dist2 p1 p2)
 
-eps :: Double
-eps = 0.001
-
-_findMaxV :: Double -> Double -> Double -> Double
-_findMaxV ang start end = 
-  if (abs diff) < eps then mid else if diff > 0 then faster else slower
-  where
-    mid = (start + end) / 2
-    diff = maxAng mid - arcAng mid ang
-    faster = _findMaxV ang mid end
-    slower = _findMaxV ang start mid 
-    
-maxPi4 = findMaxV (pi / 4)
-maxPi2 = findMaxV (pi / 2)
+dist2 :: (Double, Double) -> (Double, Double) -> Double
+dist2 (x1,y1) (x2,y2) = square (x2 - x1) + square (y2 - y1)

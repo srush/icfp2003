@@ -18,6 +18,9 @@ pi_fp = 205887
 pi2_fp :: FPInt
 pi2_fp = 411775
 
+largest_fp :: FPInt
+largest_fp = 1 `shiftL` 32 - 1
+
 foreign import ccall unsafe "mul_fp"
      c_mul_fp :: CLLong -> CLLong -> CLLong
 
@@ -66,3 +69,6 @@ int2fp i = fromIntegral (i * 65536)
 fp2int :: FPInt -> Int
 {-# INLINE fp2int #-}
 fp2int = fromIntegral . c_fp2int . fromIntegral
+
+fp2dbl :: FPInt -> Double
+fp2dbl f = (fromIntegral f) / 65536
