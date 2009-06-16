@@ -36,7 +36,7 @@ data DPState = DPState {
 --convertToGrid (x,y) =  (x `shiftR` convertConstant, y `shiftR` convertConstant)
 --convertFromGrid (x,y) =  (x `shiftL` convertConstant, y `shiftL` convertConstant)
 
-convertConstant = 2^3 + 3
+convertConstant = 2^3 +3 
 convertToGrid (x,y) =  (x `div` convertConstant, y `div` convertConstant)
 convertFromGrid (x,y) =  (x * convertConstant, y * convertConstant)
 
@@ -90,10 +90,10 @@ startDP goals  =
     mapM (\(x,y) -> mapM (\(dir, speed) -> shortestAll ((x,y), dir, speed)) $ cartesian onlyWest allSpeed) goals
 
 shortestPath ::  World -> Distance
-shortestPath world = minimum $ filter (\m -> (length $ backtrace m) > 20 ) $ concat $ trace ((show res) ++"\n" ++ (show goals) ++ "\n" ++(show begin)) $ res
+shortestPath world = minimum $ filter (\m -> (length $ backtrace m) > 50 ) $ concat $ res
     where
       begin = convertToGrid $ trace (show $ start world) start world 
-      goals = filter (begin /=) $ concat $ map (\(x,y) ->  [(x+xoff,y) | xoff <- [-2..2]]) $ map convertToGrid $ findGoals $ ground world
+      goals = filter (begin /=) $ concat $ map (\(x,y) ->  [(x+xoff,y+yoff) | xoff <- [-4..2], yoff <- [-2..2]]) $ map convertToGrid $ findGoals $ ground world
       
       (res,_) = runState (initializeState begin goals >> startDP goals)  (DPState world M.empty 0) 
 
@@ -115,12 +115,11 @@ constructPossibilities (pos,toDir,toSpeed) (fromDir,fromSpeed) = do
 shortestAll :: CellKey ->  MemoState Distance 
 shortestAll key@(p, toDir, toSpeed) = do
   st <- get
-  if (isBarrier (world st) (convertFromGrid p)) then 
+  if any (isBarrier (world st)) aroundFromGrid then 
       return maxDistance
-   else
-      case M.lookup key (table st) of 
-        Just v -> return  v 
-        Nothing -> do
+   else case M.lookup key (table st) of 
+    Just v -> return  v 
+    Nothing -> do
           incCount
           shortestTo key                     
             --trace (show $table st)$ trace (show (p,toDir)) $ mapM (shortestTo p) $ blockTurnBack toDir
@@ -128,7 +127,8 @@ shortestAll key@(p, toDir, toSpeed) = do
             --
             --let Just v  = M.lookup (p,toDir) (table st)
             --return $ v
-
+    where (x,y) = convertFromGrid p
+          aroundFromGrid = [(x+xoff,y+yoff) | xoff <- [0..10], yoff <- [0..10]]
 
 data Turn = Sharp 
           | Slight
