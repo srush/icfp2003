@@ -15,9 +15,10 @@ _selectN :: [a] -> Int -> Int -> IO [a]
 _selectN [] _ _ = return []
 _selectN (h:t) needed avail = do
   p <- coinFlip (fromIntegral needed / fromIntegral avail)
-  let needed' = if p then needed - 1 else needed 
+  let needed' = if p then needed - 1 else needed
   rest <- _selectN t needed' (avail - 1)
-  return $ if p then h : rest else rest 
+  return $ if p then h : rest else rest
 
 selectN :: [a] -> Int -> IO [a]
 selectN items needed = _selectN items needed (length items)
+
